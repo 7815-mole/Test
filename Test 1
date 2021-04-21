@@ -1,0 +1,45 @@
+import requests
+from bs4 import BeautifulSoup
+animals = []
+alfabit = ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ё', 'Ж', 'З', 'И', 'Й', 'К', 'Л', 'М', 'Н', 'О', 'П', 'Р', 'С', 'Т', 'У', 'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Щ', 'Ъ', 'Ы', 'Ь', 'Э', 'Ю', 'Я']
+
+def names(url, alfabit):
+
+
+#Функия принимает на вход ссылку википедии (Категория:Животные по алфавиту) на определенную букву русского алфавита, на выходе возращает список животных, которые начинаются на эту букву
+
+
+  animals = []
+  page = requests.get(url).text
+  soup = BeautifulSoup(page, 'lxml')
+  names = soup.find('div', class_='mw-category-group').find_all('a')
+  for name in names:
+    name = name.__str__()
+    name = name.split('"')
+
+    if (name[3].startswith(alfabit[k])):
+      animals.append(name[3])
+  return animals, soup
+
+
+for k in range(len(alfabit)):
+  url = f'https://ru.wikipedia.org/w/index.php?title=Категория:Животные_по_алфавиту&from={alfabit[k]}'
+  animal, soup = names(url, alfabit)
+  animals.extend(animal)
+  while len(animal) >= 199:
+    links = soup.find('div', id='mw-pages').find_all('a')
+    for a in links:
+      if a.text == 'Следующая страница':
+        url = 'https://ru.wikipedia.org/' + a.get('href')
+        animal, soup = names(url, alfabit)
+        animals.extend(animal)
+
+
+animals = list(set(animals))
+animals = [item[0] for item in animals]
+my_dict = {i:animals.count(i) for i in animals}
+for i in alfabit:
+  try:
+    print(f'{i}: {my_dict[i]}')
+  except:
+    continue
